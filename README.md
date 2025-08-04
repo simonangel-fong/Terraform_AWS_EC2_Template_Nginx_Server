@@ -16,7 +16,9 @@ terraform init --backend-config="state.config"
 
 - Diagram
 
-![pic](./pic/diagram.png)
+![pic](./pic/diagram.gif)
+
+---
 
 ### EOF Method
 

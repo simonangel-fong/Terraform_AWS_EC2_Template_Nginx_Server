@@ -8,6 +8,7 @@ variable "aws_ec2_type" {
   description = "EC2 instance type"
   default     = "t2.micro"
 }
+
 variable "aws_ec2_ami" {
   type        = string
   description = "EC2 instance image"
