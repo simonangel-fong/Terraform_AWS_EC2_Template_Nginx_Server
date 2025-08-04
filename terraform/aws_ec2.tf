@@ -1,27 +1,62 @@
-resource "aws_instance" "ec2_instance" {
+# ##############################
+# EC2 Instance
+# ##############################
+
+resource "aws_instance" "nginx_server" {
   instance_type               = var.aws_ec2_type
   ami                         = var.aws_ec2_ami
-  vpc_security_group_ids      = [aws_security_group.sg_ssh.id]
-  subnet_id                   = aws_subnet.subnet_public.id
-  associate_public_ip_address = true
+  vpc_security_group_ids      = [aws_security_group.nginx_sg.id]
+  subnet_id                   = aws_subnet.main_subnet_public.id
+  associate_public_ip_address = true # allow public ip
 
   key_name = var.aws_key
 
+  user_data_replace_on_change = true
+
+    # # EOF method
+    # # "-" is required when indentation is needed.
+    # user_data = <<-EOF
+    #     #!/bin/bash
+    #     sudo apt update
+    #     sudo apt install -y nginx
+    #     echo "This is a hard coding method." >> /var/www/html/index.html
+    # EOF
+
+    # # file method
+    # user_data = file("${path.module}/../ec2/install_nginx.sh")
+
+  # templatefile method
+  user_data = templatefile("${path.module}/../ec2/init.sh.tpl", {
+    aws_region = var.aws_region
+  })
+
   tags = {
-    Name = "ec2-instance"
+    Name = "nginx_server"
   }
 }
 
-resource "aws_security_group" "sg_ssh" {
-  name        = "allow_ssh"
-  description = "Allow SSH access"
+# ##############################
+# Security Group
+# ##############################
+resource "aws_security_group" "nginx_sg" {
+  name        = "Nginx Security Group"
+  description = "Allow SSH and HTTP access."
   vpc_id      = aws_vpc.vpc_main.id
 
+  # inbound: ssh
   ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] # Restrict this for better security in real deployments
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # inbound: http
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
@@ -32,6 +67,6 @@ resource "aws_security_group" "sg_ssh" {
   }
 
   tags = {
-    Name = "allow_ssh"
+    Name = "nginx_sg"
   }
 }
